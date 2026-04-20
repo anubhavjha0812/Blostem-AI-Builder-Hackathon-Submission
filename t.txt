@@ -196,3 +196,6 @@ model ProfileHistory {
 - Start the Next.js server on port 3000.
 - Register an Admin, Client, and Freelancer.
 - Create a project, approve it, submit a proposal, shortlist, and select a winner, checking the simulated escrow along the way.
+
+
+1
