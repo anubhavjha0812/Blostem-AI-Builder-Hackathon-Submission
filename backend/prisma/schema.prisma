@@ -5,7 +5,6 @@ generator client {
 // In Prisma 6 config is partially moved, but we still define the datasource here for compatibility and standard Prisma Client.
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {

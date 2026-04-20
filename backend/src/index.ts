@@ -8,6 +8,12 @@ import swaggerUi from 'swagger-ui-express';
 import yamljs from 'yamljs';
 import path from 'path';
 
+import authRoutes from './routes/auth';
+import projectsRoutes from './routes/projects';
+import submissionsRoutes from './routes/submissions';
+import profileRoutes from './routes/profile';
+import adminRoutes from './routes/admin';
+
 export const app = express();
 const port = process.env.PORT || 5000;
 

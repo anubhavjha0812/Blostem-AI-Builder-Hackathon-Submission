@@ -9,6 +9,8 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
+    // @ts-ignore - Explicit datasourceUrl is required by Prisma v7 when omitted from schema
+    datasourceUrl: process.env.DATABASE_URL, // ✅ NEW (Prisma v7 requirement)
     log: ["error", "warn"],
   });
 
