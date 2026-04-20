@@ -1,47 +1,46 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
+@theme {
   --foreground-rgb: 15, 23, 42;
   --background-start-rgb: 248, 250, 252;
   --background-end-rgb: 241, 245, 249;
-  --primary-blue: 37, 99, 235;
-  --primary-dark: 30, 58, 138;
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      rgb(var(--background-start-rgb)),
-      rgb(var(--background-end-rgb))
-    );
-  min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-}
-
-@layer components {
-  .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl;
-  }
+  --primary-blue: #2563eb;
+  --primary-dark: #1e3a8a;
   
-  .premium-input {
-    @apply mt-1 block w-full rounded-lg border-gray-200 shadow-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent p-3 text-sm text-black bg-white/50;
-  }
-  
-  .auth-gradient {
-    background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.05), transparent),
-                radial-gradient(circle at bottom right, rgba(30, 58, 138, 0.05), transparent);
+  --animate-fade-in: fadeIn 0.5s ease-out forwards;
+}
+
+@layer base {
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: linear-gradient(
+        to bottom,
+        rgb(var(--background-start-rgb)),
+        rgb(var(--background-end-rgb))
+      );
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
-/* Animations */
+@utility glass-card {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl;
+}
+
+@utility premium-input {
+  @apply mt-1 block w-full rounded-lg border-gray-200 shadow-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent p-3 text-sm text-black bg-white/50;
+}
+
+@utility auth-gradient {
+  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.05), transparent),
+              radial-gradient(circle at bottom right, rgba(30, 58, 138, 0.05), transparent);
+}
+
+@utility animate-fade-in {
+  animation: var(--animate-fade-in);
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
 }
