@@ -1,0 +1,227 @@
+openapi: 3.0.0
+info:
+  title: BuildX API Documentation
+  description: Hackathon MVP API documenting the simulated outcome-based freelancing rules.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Local server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [FREELANCER, CLIENT, ADMIN]
+      responses:
+        "201":
+          description: User registered successfully
+
+  /auth/login:
+    post:
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: OK (returns token and user details)
+
+  /projects:
+    get:
+      summary: List available projects
+      responses:
+        "200":
+          description: OK
+
+    post:
+      summary: Create a new project (Client only)
+      description: Deducts simulated escrow balance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                budget:
+                  type: number
+      responses:
+        "201":
+          description: Project created successfully
+
+  /projects/{id}/approve:
+    post:
+      summary: Approve project (Admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Project approved
+
+  /submissions:
+    get:
+      summary: Get submissions for a project
+      parameters:
+        - in: query
+          name: projectId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: stage
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+
+    post:
+      summary: Submit a project MVP (Stage 1 or 2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                stage:
+                  type: integer
+                mvpLink:
+                  type: string
+                architecture:
+                  type: string
+                plan:
+                  type: string
+      responses:
+        "201":
+          description: Submission successful
+
+  /submissions/shortlist:
+    post:
+      summary: Shortlist stage 1 candidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                selectedSubmissionIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Shortlisting complete
+
+  /submissions/select-winner:
+    post:
+      summary: Select final winner and release simulated escrow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                winnerSubmissionId:
+                  type: string
+      responses:
+        "200":
+          description: Winner selected and payment released
+
+  /profile:
+    get:
+      summary: Get current logged-in user profile
+      responses:
+        "200":
+          description: OK
+
+  /admin/projects:
+    get:
+      summary: List ALL projects with optional status filter (Admin only)
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [PENDING_APPROVAL, OPEN, STAGE_1_EVALUATION, STAGE_2_OPEN, STAGE_2_EVALUATION, COMPLETED]
+      responses:
+        "200":
+          description: OK
+
+  /admin/users:
+    get:
+      summary: List all users (Admin only)
+      responses:
+        "200":
+          description: OK
+
+  /admin/override-winner:
+    post:
+      summary: Force-select winner for any project (Admin override)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                winnerSubmissionId:
+                  type: string
+      responses:
+        "200":
+          description: Winner overridden successfully

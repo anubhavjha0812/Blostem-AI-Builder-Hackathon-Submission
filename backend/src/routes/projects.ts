@@ -51,7 +51,7 @@ router.post('/', authenticate, authorize(['CLIENT']), async (req: AuthRequest, r
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.errors });
+      res.status(400).json({ error: error.issues });
       return;
     }
     console.error(error);
@@ -62,7 +62,7 @@ router.post('/', authenticate, authorize(['CLIENT']), async (req: AuthRequest, r
 // Admin approves a project
 router.post('/:id/approve', authenticate, authorize(['ADMIN']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const projectId = req.params.id;
+    const projectId = String(req.params.id);
 
     const project = await prisma.project.findUnique({ where: { id: projectId } });
     if (!project) {
@@ -76,7 +76,7 @@ router.post('/:id/approve', authenticate, authorize(['ADMIN']), async (req: Auth
     }
 
     const updated = await prisma.project.update({
-      where: { id: projectId },
+      where: { id: projectId as string },
       data: { status: 'OPEN' },
     });
 
@@ -117,7 +117,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const project = await prisma.project.findUnique({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       include: {
         client: {
           select: { id: true, name: true, kyc_verified: true, payment_capacity_score: true },

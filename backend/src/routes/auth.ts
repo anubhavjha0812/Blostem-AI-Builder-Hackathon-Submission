@@ -61,7 +61,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     res.status(201).json({ message: 'User registered successfully', userId: user.id });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.errors });
+      res.status(400).json({ error: error.issues });
       return;
     }
     console.error(error);
@@ -98,7 +98,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     res.json({ token, user: { id: user.id, name: user.name, role: user.role } });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.errors });
+      res.status(400).json({ error: error.issues });
       return;
     }
     console.error(error);

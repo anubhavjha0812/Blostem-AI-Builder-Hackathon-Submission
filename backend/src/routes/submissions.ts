@@ -133,7 +133,7 @@ router.post('/', authenticate, authorize(['FREELANCER']), async (req: AuthReques
     res.status(201).json({ message: 'Submission successful', submission, score, feedback });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.errors });
+      res.status(400).json({ error: error.issues });
       return;
     }
     console.error(error);
@@ -144,8 +144,15 @@ router.post('/', authenticate, authorize(['FREELANCER']), async (req: AuthReques
 // Get submissions for a project (Client only)
 router.get('/', authenticate, authorize(['CLIENT', 'ADMIN']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const projectId = req.query.projectId as string;
-    const stage = parseInt(req.query.stage as string, 10);
+    const projectIdRaw = Array.isArray(req.query.projectId)
+      ? req.query.projectId[0]
+      : req.query.projectId;
+    const projectId = projectIdRaw as string;
+
+    const stageRaw = Array.isArray(req.query.stage)
+      ? req.query.stage[0]
+      : req.query.stage;
+    const stage = parseInt(stageRaw as string, 10);
 
     if (!projectId || !stage) {
       res.status(400).json({ error: 'Missing projectId or stage query parameters' });
@@ -211,7 +218,7 @@ router.post('/shortlist', authenticate, authorize(['CLIENT', 'ADMIN']), async (r
     res.json({ message: 'Shortlisting complete. Project is now open for Stage 2.' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.errors });
+      res.status(400).json({ error: error.issues });
       return;
     }
     console.error(error);
@@ -282,7 +289,7 @@ router.post('/select-winner', authenticate, authorize(['CLIENT', 'ADMIN']), asyn
     res.json({ message: 'Winner selected! Payment Released Successfully via Blostem Escrow.' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.errors });
+      res.status(400).json({ error: error.issues });
       return;
     }
     console.error(error);
