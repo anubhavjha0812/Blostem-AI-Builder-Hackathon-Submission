@@ -51,7 +51,9 @@ app.use('/submissions', submissionsRoutes);
 app.use('/profile', profileRoutes);
 app.use('/admin', adminRoutes);
 
-app.get('/health', (req, res) => {
+import { Request, Response } from 'express';
+
+app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
