@@ -18,20 +18,12 @@ export const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    const allowed = [
-      process.env.FRONTEND_URL,
-      'http://localhost:3000',
-    ].filter(Boolean);
-
-    // Allow Vercel preview URLs and any configured origin
-    if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS blocked: ${origin}`));
-    }
-  },
-  credentials: true,
+  origin: [
+    "http://localhost:3000",
+    "https://blostem-ai-builder-hackathon-submission-rhgq5v2os.vercel.app",
+    "https://blostem-ai-builder-hackathon-submission.vercel.app"
+  ],
+  credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -59,7 +51,10 @@ app.get('/health', (req: Request, res: Response) => {
 
 if (require.main === module) {
   app.listen(port, () => {
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://blostem-ai-builder-hackathon-submission.onrender.com'
+      : `http://localhost:${port}`;
     console.log(`Server is running on port ${port}`);
-    console.log(`API documentation available at http://localhost:${port}/api-docs`);
+    console.log(`API documentation available at ${baseUrl}/api-docs`);
   });
 }
