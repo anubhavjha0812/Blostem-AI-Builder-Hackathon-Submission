@@ -11,6 +11,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   role: z.enum(['FREELANCER', 'CLIENT', 'ADMIN']),
+  adminToken: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -43,6 +44,11 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       account_balance = Math.floor(Math.random() * 50000) + 10000; // Random balance 10k - 60k
       payment_capacity_score = Math.floor(Math.random() * 50) + 50; // Random score 50 - 100
     } else if (data.role === 'ADMIN') {
+      const serverAdminToken = process.env.ADMIN_TOKEN || 'buildx-hackathon-2024';
+      if (data.adminToken !== serverAdminToken) {
+        res.status(401).json({ error: 'Invalid admin registration token' });
+        return;
+      }
       kyc_verified = true;
     }
 
