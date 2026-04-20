@@ -1,18 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import yamljs from 'yamljs';
 import path from 'path';
-
-import authRoutes from './routes/auth';
-import projectsRoutes from './routes/projects';
-import submissionsRoutes from './routes/submissions';
-import profileRoutes from './routes/profile';
-import adminRoutes from './routes/admin';
-
-dotenv.config();
 
 export const app = express();
 const port = process.env.PORT || 5000;
