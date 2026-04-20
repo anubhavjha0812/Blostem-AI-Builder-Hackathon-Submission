@@ -1,1 +1,198 @@
 postgresql://neondb_owner:npg_It0SyBos4FVN@ep-orange-salad-annahlt3-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+
+
+# BuildX Task Tracker
+
+- `[x]` **Phase 1: Backend Setup & Database**
+  - `[x]` Initialize Node.js + Express project in `/backend`.
+  - `[x]` Set up TypeScript, nodemon, and ts-node.
+  - `[x]` Initialize Prisma and configure schema for Neon PostgreSQL.
+  - `[x]` Generate and push Prisma schema to DB.
+- `[`/`]` **Phase 2: Backend Authentication & Security**
+  - `[ ]` Set up Admin, Client, and Freelancer registration (`/auth/register`).
+  - `[ ]` Implement robust JWT Login (`/auth/login`).
+  - `[ ]` Create role-based authorization middleware (RBAC).
+- `[ ]` **Phase 3: Backend Core Features (Projects & Submissions)**
+  - `[ ]` Create `/projects` API endpoints (Create, List - Client/Admin logic).
+  - `[ ]` Create `/submissions` API endpoints (Submit MVP, Get Submissions).
+  - `[ ]` Build simple rule-based scoring module for Stage 1.
+  - `[ ]` Implement shortlisting and winner selection Logic.
+- `[ ]` **Phase 4: Frontend Next.js Setup**
+  - `[ ]` Initialize Next.js 14 App Router + Tailwind in `/frontend`.
+  - `[ ]` Set up HTTP client (Axios/Fetch) with JWT interceptors.
+- `[ ]` **Phase 5: Frontend UI - Auth & Profiles**
+  - `[ ]` Login and Registration User Interfaces.
+  - `[ ]` User Profile dashboard showing history and "Blostem" metrics.
+- `[ ]` **Phase 6: Frontend UI - Core Flows**
+  - `[ ]` Client Flow: Escrow simulation, Project creation, Submissions viewing.
+  - `[ ]` Freelancer Flow: Browsing projects, Multi-stage submission forms.
+  - `[ ]` Admin Flow: "God mode" dashboard for overriding/managing.
+- `[ ]` **Phase 7: Final Polish & Demo Polish**
+  - `[ ]` Add "KYC Verified" Badges and metrics to UI.
+  - `[ ]` Final E2E testing of the platform logic.
+
+
+# BuildX Implementation Plan
+
+This document outlines the architecture and tasks for building **BuildX**, an outcome-based freelancing platform using a split frontend/backend architecture with Next.js and Express.
+
+## Architecture Overview
+- **Frontend (`/frontend`)**: Next.js App Router, styled with Tailwind CSS, deployed to Vercel.
+- **Backend (`/backend`)**: Node.js & Express API, deployed to Render.
+- **Database**: Neon PostgreSQL.
+- **ORM**: Prisma.
+- **Validation**: Zod.
+- **Authentication**: JWT based (bcrypt for hashing).
+
+## 1. Backend Setup (`/backend`)
+
+### 1.1 Project Initialization
+- Initialize a Node.js project.
+- Install dependencies: `express`, `cors`, `dotenv`, `jsonwebtoken`, `bcrypt`, `zod`, `cookie-parser`.
+- Install dev dependencies: `nodemon`, `typescript`, `@types/express`, etc. (We will use TypeScript for reliability).
+- Initialize Prisma (`npx prisma init`) and configure the schema.
+
+### 1.2 Prisma Schema
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  FREELANCER
+  CLIENT
+  ADMIN
+}
+
+enum ProjectStatus {
+  PENDING_APPROVAL
+  OPEN
+  STAGE_1_EVALUATION
+  STAGE_2_OPEN
+  STAGE_2_EVALUATION
+  COMPLETED
+}
+
+model User {
+  id                     String           @id @default(uuid())
+  name                   String
+  email                  String           @unique
+  password               String
+  role                   Role
+  
+  // Blostem Simulation (Synthetic Data)
+  kyc_verified           Boolean          @default(false)
+  account_balance        Float            @default(0)
+  payment_capacity_score Int              @default(50)
+
+  projects               Project[]        @relation("ClientProjects")
+  submissions            Submission[]
+  profileHistories       ProfileHistory[]
+}
+
+model Project {
+  id              String         @id @default(uuid())
+  title           String
+  description     String
+  budget          Float
+  status          ProjectStatus  @default(PENDING_APPROVAL)
+  client          User           @relation("ClientProjects", fields: [clientId], references: [id])
+  clientId        String
+  submissions     Submission[]
+  profileHistory  ProfileHistory[]
+}
+
+model Submission {
+  id           String    @id @default(uuid())
+  project      Project   @relation(fields: [projectId], references: [id])
+  projectId    String
+  user         User      @relation(fields: [userId], references: [id])
+  userId       String
+  stage        Int       // 1 or 2
+  mvpLink      String
+  architecture String
+  plan         String
+  score        Int?      // 0-100
+  status       String    @default("PENDING") // PENDING, SHORTLISTED, REJECTED, WINNER
+  feedback     Feedback?
+}
+
+model Feedback {
+  id           String     @id @default(uuid())
+  submission   Submission @relation(fields: [submissionId], references: [id])
+  submissionId String     @unique
+  text         String
+}
+
+model ProfileHistory {
+  id           String    @id @default(uuid())
+  user         User      @relation(fields: [userId], references: [id])
+  userId       String
+  project      Project   @relation(fields: [projectId], references: [id])
+  projectId    String
+  stageReached Int
+}
+```
+
+### 1.3 Core Backend APIs
+1. **Auth (`/auth`)**:
+   - `POST /auth/register`: Create user (Client or Freelancer)
+   - `POST /auth/login`: Issue JWT token.
+2. **Projects (`/projects`)**:
+   - `GET /projects`: List approved projects.
+   - `POST /projects`: Create project (Client lock escrow sim).
+   - `POST /projects/approve`: Approve project (Admin).
+3. **Submissions (`/submissions`)**:
+   - `POST /submissions`: Submit Stage 1 / Stage 2 work. Runs rule-based scoring.
+   - `GET /submissions?projectId=&stage=`: View submissions (Client).
+4. **Evaluation**:
+   - `POST /shortlist`: Client picks top users, generates generic feedback for rejected users. Updates Profiles.
+   - `POST /select-winner`: Client picks winner, releases fake escrow payload.
+5. **Profiles (`/profile`)**:
+   - `GET /profile`: User history and tracking.
+
+### 1.4 Middleware
+- **Auth Middleware**: Parses JWT and sets `req.user`.
+- **Role Middleware**: Enforces `Client`, `Freelancer`, or `Admin` access.
+- **Zod Middleware**: Basic request body schemas.
+
+## 2. Frontend Setup (`/frontend`)
+
+### 2.1 Next.js Initialization
+- Create a Next.js App Router app (`npx create-next-app@latest`).
+- Configure Tailwind CSS.
+- Set up an `api` utility that points to the Render backend (localhost for now).
+
+### 2.2 Core UI Pages
+- `/` - Landing page with roles and login CTA.
+- `/login`, `/register` - Authentication screens.
+- `/dashboard` - Role-based dashboard (Freelancer: Browse projects; Client: View active projects).
+- `/project/[id]` - Project details and submission form.
+- `/project/[id]/submissions` - Client view for submissions.
+- `/profile` - Freelancer credibility and history.
+
+### 2.3 State & Auth Handling
+- Store JWT in cookies or localStorage for cross-page persistence.
+- Add Axios or Ky as an HTTP client.
+
+## Open Questions
+
+- Should I write the backend purely in JavaScript instead of TypeScript to save time, or do you prefer TypeScript? I will default to TypeScript for type safety unless you advise otherwise.
+- For the simulated payment, I will initialize Client users with a randomized `account_balance` and `kyc_verified` status to demonstrate Blostem integration out-of-the-box. Is this fine?
+
+## Verification Plan
+
+### Automated Tests
+- Postman or curl tests to verify backend execution.
+
+### Manual Verification
+- Start the Express server on port 5000.
+- Start the Next.js server on port 3000.
+- Register an Admin, Client, and Freelancer.
+- Create a project, approve it, submit a proposal, shortlist, and select a winner, checking the simulated escrow along the way.
