@@ -26,7 +26,9 @@ function RegisterForm() {
     } else if (role === 'ADMIN') {
       setRole('FREELANCER');
     }
-  }, [isSecretEnabled, role]);
+    // Only re-run when secret param changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSecretEnabled]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
