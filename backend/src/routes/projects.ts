@@ -76,7 +76,7 @@ router.post('/:id/approve', authenticate, authorize(['ADMIN']), async (req: Auth
     }
 
     const updated = await prisma.project.update({
-      where: { id: projectId as string },
+      where: { id: projectId },
       data: { status: 'OPEN' },
     });
 
@@ -87,10 +87,55 @@ router.post('/:id/approve', authenticate, authorize(['ADMIN']), async (req: Auth
   }
 });
 
+// Admin/Client rejects/cancels a project and REFUNDS escrow
+router.post('/:id/reject', authenticate, authorize(['CLIENT', 'ADMIN']), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const projectId = String(req.params.id);
+    const userId = req.user!.id;
+
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    // Only owner or admin can reject
+    if (project.clientId !== userId && req.user!.role !== 'ADMIN') {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    if (['COMPLETED', 'REJECTED', 'CANCELLED'].includes(project.status)) {
+      res.status(400).json({ error: 'Project is already in a final state' });
+      return;
+    }
+
+    // Refund Logic
+    const client = await prisma.user.findUnique({ where: { id: project.clientId } });
+    await prisma.user.update({
+      where: { id: project.clientId },
+      data: { account_balance: (client?.account_balance || 0) + project.budget }
+    });
+
+    const updated = await prisma.project.update({
+      where: { id: projectId },
+      data: { status: req.user!.role === 'ADMIN' ? 'REJECTED' : 'CANCELLED' },
+    });
+
+    res.json({ 
+      message: `Project ${updated.status.toLowerCase()} and escrow budget refunded to client.`, 
+      project: updated 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // List projects
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    // Basic implementation: returning all OPEN projects
+    // Basic implementation: returning all projects that are not PENDING or REJECTED
     const projects = await prisma.project.findMany({
       where: {
         status: { in: ['OPEN', 'STAGE_1_EVALUATION', 'STAGE_2_OPEN', 'STAGE_2_EVALUATION', 'COMPLETED'] },

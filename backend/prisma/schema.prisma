@@ -21,6 +21,8 @@ enum ProjectStatus {
   STAGE_2_OPEN
   STAGE_2_EVALUATION
   COMPLETED
+  REJECTED
+  CANCELLED
 }
 
 model User {

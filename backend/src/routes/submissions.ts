@@ -55,6 +55,26 @@ const submitSchema = z.object({
   plan: z.string().min(10),
 });
 
+// Helper to update ProfileHistory without duplicates
+async function updateProfileHistory(userId: string, projectId: string, stage: number) {
+  const existing = await prisma.profileHistory.findFirst({
+    where: { userId, projectId }
+  });
+
+  if (existing) {
+    if (existing.stageReached < stage) {
+      await prisma.profileHistory.update({
+        where: { id: existing.id },
+        data: { stageReached: stage }
+      });
+    }
+  } else {
+    await prisma.profileHistory.create({
+      data: { userId, projectId, stageReached: stage }
+    });
+  }
+}
+
 // Submit a proposal
 router.post('/', authenticate, authorize(['FREELANCER']), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -122,13 +142,7 @@ router.post('/', authenticate, authorize(['FREELANCER']), async (req: AuthReques
       }
     });
 
-    await prisma.profileHistory.create({
-      data: {
-        userId,
-        projectId: project.id,
-        stageReached: data.stage
-      }
-    });
+    await updateProfileHistory(userId, project.id, data.stage);
 
     res.status(201).json({ message: 'Submission successful', submission, score, feedback });
   } catch (error) {
@@ -277,14 +291,8 @@ router.post('/select-winner', authenticate, authorize(['CLIENT', 'ADMIN']), asyn
       data: { account_balance: (winnerUser?.account_balance || 0) + project.budget }
     });
 
-    // Update ProfileHistory to 3 (Winner)
-    await prisma.profileHistory.create({
-      data: {
-        userId: submission.userId,
-        projectId: project.id,
-        stageReached: 3
-      }
-    });
+    // Update ProfileHistory to 3 (Winner) without duplicates
+    await updateProfileHistory(submission.userId, project.id, 3);
 
     res.json({ message: 'Winner selected! Payment Released Successfully via Blostem Escrow.' });
   } catch (error) {

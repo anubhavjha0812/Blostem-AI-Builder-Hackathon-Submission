@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Response, Request } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 
@@ -47,6 +47,24 @@ router.get('/users', authenticate, authorize(['ADMIN']), async (req: AuthRequest
       orderBy: { role: 'asc' },
     });
     res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Admin: Verify KYC for a user
+router.post('/users/:id/verify-kyc', authenticate, authorize(['ADMIN']), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.id;
+    const { verified } = req.body;
+
+    const user = await prisma.user.update({
+      where: { id: userId as string },
+      data: { kyc_verified: verified === undefined ? true : !!verified },
+    });
+
+    res.json({ message: `User KYC status updated to ${user.kyc_verified ? 'Verified' : 'Pending'}`, user });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
