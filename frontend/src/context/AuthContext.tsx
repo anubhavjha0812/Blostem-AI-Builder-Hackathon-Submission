@@ -8,6 +8,9 @@ export interface User {
   id: string;
   name: string;
   role: UserRole;
+  account_balance?: number;
+  payment_capacity_score?: number;
+  kyc_verified?: boolean;
 }
 
 interface AuthContextType {

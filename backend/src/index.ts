@@ -21,10 +21,13 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "https://blostem-ai-builder-hackathon-submission-rhgq5v2os.vercel.app",
-    "https://blostem-ai-builder-hackathon-submission.vercel.app"
+    "https://blostem-ai-builder-hackathon-submission.vercel.app",
+    "https://blostem-ai-builder-hackathon-submis.vercel.app",
+    "https://blostem-ai-builder-hackathon-submis-rhgq5v2os.vercel.app"
   ],
   credentials: true
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
